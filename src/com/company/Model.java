@@ -14,35 +14,45 @@ import java.util.Scanner;
 
 public class Model {
 
-    private double[][] vertices = new double[4][];
+    private ArrayList<double []> verticeList = new ArrayList<>();
     private ArrayList<String []> faces = new ArrayList< String []>();
 
     public Model (Driver driver){
 
         double[][] matrixData = { {1d,2d,3d}, {2d,5d,3d}};
-        RealMatrix m = MatrixUtils.createRealMatrix(matrixData);
-
         File obj = new File(driver.getModel());
         System.out.println(obj);
+        readFile(obj);
+        double[][] verticeListForLibrary = convertVerticeListForLibrary();
+        System.out.println(Arrays.deepToString(verticeListForLibrary));
+        RealMatrix matrix = MatrixUtils.createRealMatrix(verticeListForLibrary);
+        System.out.println(matrix.toString());
+        matrix = matrix.transpose();
+        System.out.println(matrix.toString());
+        matrix = performManipulations(driver,matrix);
 
+    }
+    private void readFile(File obj) {
         try {
+
             Scanner scanner = new Scanner(obj);
-            int vCounter = 0;
             while(scanner.hasNext()){
-                if(scanner.next().equals("v")){
-                    System.out.println("seen v");
+                String lineToken = scanner.next();
+                if(lineToken.equals("v")){
+                    double[] vertex = new double[4];
                     double x = scanner.nextDouble();
                     double y = scanner.nextDouble();
                     double z = scanner.nextDouble();
-                    System.out.println(x +" " + y +" "+ z);
-                    vertices[0][vCounter] = x;
-                    vertices[1][vCounter] = y;
-                    vertices[2][vCounter] = z;
-                    vertices[3][vCounter] = 0;
-
-                    vCounter++;
+                    vertex[0] = x;
+                    vertex[1] = y;
+                    vertex[2] = z;
+                    vertex[3] = 0.0;
+                    verticeList.add(vertex);
+                    //System.out.println(x + " " + y + " " + z);
+                    System.out.println(Arrays.deepToString(verticeList.toArray()));
+                    continue;
                 }
-                if(scanner.next() == "f"){
+                if(lineToken.equals("f")){
                     String first = scanner.next();
                     String second = scanner.next();
                     String third = scanner.next();
@@ -51,21 +61,41 @@ public class Model {
                     face[1] = second;
                     face[2] = third;
                     faces.add(face);
+                    System.out.println(Arrays.deepToString(faces.toArray()));
 
                 }
             }
-            System.out.println(this.toString());
-            performManipulations(driver);
-
         }catch (IOException e) {
             System.exit(2);
         }
-    }
-    public void performManipulations(Driver d){
 
     }
+    //converts Arraylist of double [] to double[][] for library use
+    public double[][] convertVerticeListForLibrary(){
+        double [][] returnList = new double[verticeList.size()][4];
+        for(int i = 0; i < returnList.length; i++){
+            double[] vertex = verticeList.get(i);
+            returnList[i] = vertex;
+        }
+        return returnList;
+    }
+    public RealMatrix performManipulations(Driver d, RealMatrix matrix){
+       matrix = scale(d, matrix);
+       matrix = translate(d,matrix);
+       matrix = rotate(d,matrix);
+        return  matrix;
+    }
     public String toString(){
-        return Arrays.toString(vertices) + faces.toString();
+        return Arrays.toString(faces.toArray());
+    }
+    public RealMatrix scale (Driver d, RealMatrix matrix){
+        return matrix;
+    }
+    public RealMatrix translate (Driver d, RealMatrix matrix){
+        return matrix;
+    }
+    public RealMatrix rotate (Driver d, RealMatrix matrix){
+        return matrix;
     }
 
 }
