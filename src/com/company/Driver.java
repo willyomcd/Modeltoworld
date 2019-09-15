@@ -45,9 +45,25 @@ public class Driver {
     public String getModel() {
         return this.model;
     }
+    public double getScale(){
+        return scale;
+    }
+    public double[] getTranslation(){
+        //the added one is for homogenous translation
+        double[] translation = new double[]{tx,ty,tz,1};
+        return translation;
+    }
+    public double getAngle(){
+        return angle;
+    }
+    public double[] getAxis(){
+        double[] axis = new double[]{wx,wy,wz};
+        return axis;
+    }
 
     @Override
     public String toString() {
         return wx + " " + wy + " " + wz + " " + angle +  " " + scale + " " + tx + " " + ty + " " + tz + " " + wz + " " + model;
     }
+
 }

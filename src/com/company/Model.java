@@ -3,11 +3,9 @@ package com.company;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
-import javax.imageio.IIOException;
+
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -19,7 +17,6 @@ public class Model {
 
     public Model (Driver driver){
 
-        double[][] matrixData = { {1d,2d,3d}, {2d,5d,3d}};
         File obj = new File(driver.getModel());
         System.out.println(obj);
         readFile(obj);
@@ -30,6 +27,7 @@ public class Model {
         matrix = matrix.transpose();
         System.out.println(matrix.toString());
         matrix = performManipulations(driver,matrix);
+        outputFiles();
 
     }
     private void readFile(File obj) {
@@ -71,7 +69,7 @@ public class Model {
 
     }
     //converts Arraylist of double [] to double[][] for library use
-    public double[][] convertVerticeListForLibrary(){
+    private double[][] convertVerticeListForLibrary(){
         double [][] returnList = new double[verticeList.size()][4];
         for(int i = 0; i < returnList.length; i++){
             double[] vertex = verticeList.get(i);
@@ -79,23 +77,43 @@ public class Model {
         }
         return returnList;
     }
-    public RealMatrix performManipulations(Driver d, RealMatrix matrix){
-       matrix = scale(d, matrix);
-       matrix = translate(d,matrix);
-       matrix = rotate(d,matrix);
+    private RealMatrix performManipulations(Driver d, RealMatrix matrix){
+        matrix = scale(d, matrix);
+        //System.out.println(matrix.toString());
+        translate(d,matrix);
+        rotate(d,matrix);
         return  matrix;
     }
     public String toString(){
         return Arrays.toString(faces.toArray());
     }
-    public RealMatrix scale (Driver d, RealMatrix matrix){
+    private RealMatrix scale (Driver d, RealMatrix matrix){
+        double scale = d.getScale();
+        System.out.println("scale factor:" + scale);
+        matrix = matrix.scalarMultiply(scale);
+        System.out.println(matrix.toString());
         return matrix;
     }
-    public RealMatrix translate (Driver d, RealMatrix matrix){
+    private RealMatrix translate (Driver d, RealMatrix matrix){
+        double [] translate = d.getTranslation();
+        RealMatrix iD = MatrixUtils.createRealIdentityMatrix(4);
+
+        iD.setColumn(iD.getColumnDimension() -1, translate);
+        System.out.println("id creation" + iD.toString());
+        double [] test = iD.getColumn(iD.getColumnDimension()-1);
+        System.out.println(matrix.toString());
+        matrix = iD.multiply(matrix);
+        System.out.println(matrix.toString());
+
+
         return matrix;
     }
-    public RealMatrix rotate (Driver d, RealMatrix matrix){
+    private RealMatrix rotate (Driver d, RealMatrix matrix){
         return matrix;
     }
+    private void outputFiles() {
+
+    }
+
 
 }
