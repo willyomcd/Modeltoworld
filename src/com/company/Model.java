@@ -21,11 +21,11 @@ public class Model {
         System.out.println(obj);
         readFile(obj);
         double[][] verticeListForLibrary = convertVerticeListForLibrary();
-        System.out.println(Arrays.deepToString(verticeListForLibrary));
+        //System.out.println(Arrays.deepToString(verticeListForLibrary));
         RealMatrix matrix = MatrixUtils.createRealMatrix(verticeListForLibrary);
-        System.out.println(matrix.toString());
+       // System.out.println(matrix.toString());
         matrix = matrix.transpose();
-        System.out.println(matrix.toString());
+        //System.out.println(matrix.toString());
         matrix = performManipulations(driver,matrix);
         outputFiles();
 
@@ -44,10 +44,10 @@ public class Model {
                     vertex[0] = x;
                     vertex[1] = y;
                     vertex[2] = z;
-                    vertex[3] = 0.0;
+                    vertex[3] = 1.0;
                     verticeList.add(vertex);
                     //System.out.println(x + " " + y + " " + z);
-                    System.out.println(Arrays.deepToString(verticeList.toArray()));
+                    //System.out.println(Arrays.deepToString(verticeList.toArray()));
                     continue;
                 }
                 if(lineToken.equals("f")){
@@ -59,7 +59,7 @@ public class Model {
                     face[1] = second;
                     face[2] = third;
                     faces.add(face);
-                    System.out.println(Arrays.deepToString(faces.toArray()));
+                    //System.out.println(Arrays.deepToString(faces.toArray()));
 
                 }
             }
@@ -78,10 +78,11 @@ public class Model {
         return returnList;
     }
     private RealMatrix performManipulations(Driver d, RealMatrix matrix){
-        matrix = scale(d, matrix);
+        //matrix = rotate(d,matrix);
+        //matrix = scale(d, matrix);
         //System.out.println(matrix.toString());
-        translate(d,matrix);
-        rotate(d,matrix);
+        matrix = translate(d,matrix);
+
         return  matrix;
     }
     public String toString(){
@@ -90,8 +91,13 @@ public class Model {
     private RealMatrix scale (Driver d, RealMatrix matrix){
         double scale = d.getScale();
         System.out.println("scale factor:" + scale);
-        matrix = matrix.scalarMultiply(scale);
-        System.out.println(matrix.toString());
+        RealMatrix scaleID = MatrixUtils.createRealIdentityMatrix(4);
+        scaleID = scaleID.scalarMultiply(scale);
+        double [] bottumRow = new double[] {0.0,0.0,0.0,1.0};
+        scaleID.setRow(3,bottumRow);
+        System.out.println( " scale matrix : " + scaleID.toString());
+        matrix = scaleID.multiply(matrix);
+        System.out.println( " After Scale : " + matrix.toString());
         return matrix;
     }
     private RealMatrix translate (Driver d, RealMatrix matrix){
