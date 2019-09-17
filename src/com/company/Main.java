@@ -12,7 +12,7 @@ public class Main {
 
         ArrayList<Driver> driverArray = new ArrayList<>();
         ArrayList<Model> modelArray = new ArrayList<>();
-        System.out.println(args[0]);
+        //System.out.println(args[0]);
         File file = new File(args[0]);
 
 
@@ -37,10 +37,10 @@ public class Main {
                 driver.translate(tx, ty, tz);
                 String modelName = scanner.next();
                 Path modelPath = Paths.get(args[0]);
-                System.out.println(modelPath);
+                //System.out.println(modelPath);
                 driver.setModel(modelName);
 
-                System.out.println(driver.toString());
+                //System.out.println(driver.toString());
                 Model model = new Model(driver);
                 //assigns model number
                 int modelsBefore = 0;
@@ -57,8 +57,8 @@ public class Main {
 
             }
             scannerLine.close();
-            System.out.println(driverArray.size());
-            System.out.println(modelArray.size());
+            //System.out.println(driverArray.size());
+            //System.out.println(modelArray.size());
         } catch (IOException e) {
             System.exit(1);
         }

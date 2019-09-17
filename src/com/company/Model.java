@@ -23,16 +23,21 @@ public class Model {
     private String lineHeader0;
     private String lineHeader1;
     private String sLine;
+    private RealMatrix startMatrix;
     private RealMatrix finalMatrix;
+    private RealMatrix transformationMatrix;
+    private RealMatrix inverseTransformationMatrix;
 
     public Model (Driver driver){
 
         File obj = new File(driver.getModelName());
-        System.out.println(obj);
+        //System.out.println(obj);
         readFile(obj);
         double[][] verticeListForLibrary = convertVerticeListForLibrary();
-        System.out.println(Arrays.deepToString(verticeListForLibrary));
+        //System.out.println(Arrays.deepToString(verticeListForLibrary));
         RealMatrix matrix = MatrixUtils.createRealMatrix(verticeListForLibrary);
+        startMatrix = MatrixUtils.createRealMatrix(verticeListForLibrary);
+        startMatrix = startMatrix.transpose();
        // System.out.println(matrix.toString());
         matrix = matrix.transpose();
        // System.out.println("start" + matrix.toString());
@@ -94,10 +99,21 @@ public class Model {
         return returnList;
     }
     private RealMatrix performManipulations(Driver d, RealMatrix matrix){
+        transformationMatrix = MatrixUtils.createRealIdentityMatrix(4);
+         RealMatrix rotateM = rotate(d,transformationMatrix);
+         RealMatrix scaleM = scale(d,transformationMatrix);
+        RealMatrix translateM = translate(d,transformationMatrix);
+        transformationMatrix = rotateM.multiply(scaleM.multiply(translateM));
+        inverseTransformationMatrix = MatrixUtils.inverse(transformationMatrix);
+
+
         matrix = rotate(d,matrix);
         matrix = scale(d, matrix);
         matrix = translate(d,matrix);
-        System.out.println("After everything" + matrix.toString());
+        //System.out.println("After everything" + matrix.toString());
+        //System.out.println("transformation matrix: " + transformationMatrix.toString());
+        //System.out.println("inverse transformation matrix: " + inverseTransformationMatrix.toString());
+
 
         return  matrix;
     }
@@ -206,13 +222,13 @@ public class Model {
         return faces;
     }
 
-    public File outputFile(Driver d, File folder){
+    public void outputFile(Driver d, File folder){
 
         File outfile = new File(folder,d.getModelName().substring(0,d.getModelName().length()-4) + "_mw0"+d.getModelNumber() + ".obj");
         if(!outfile.getParentFile().exists()) {
             outfile.getParentFile().mkdirs();
         }
-        System.out.println(outfile.getAbsolutePath());
+        //System.out.println(outfile.getAbsolutePath());
         try {
             FileWriter stream = new FileWriter(outfile);
             stream.write(lineHeader0 + '\n');
@@ -236,10 +252,68 @@ public class Model {
             }
             stream.close();
 
+
         }catch (IOException f){
             System.exit(3);
         }
-        return outfile;
+
+        File transOutfile = new File(folder,d.getModelName().substring(0,d.getModelName().length()-4) + "_transform_mw0"+d.getModelNumber() + ".txt");
+        try{
+            FileWriter stream = new FileWriter(transOutfile);
+            stream.write("# Transformation matrix \n");
+            for (int i = 0; i < transformationMatrix.getColumnDimension(); i++) {
+                for(int j = 0; j < transformationMatrix.getRowDimension() -1; j++){
+                    double formatter = transformationMatrix.getEntry(j,i);
+                    String formatted = String.format("%.3f", formatter);
+                    stream.write(formatted + " ");
+                }
+                stream.write('\n');
+            }
+            stream.write("\n# Inverse transformation matrix \n");
+            for (int i = 0; i < inverseTransformationMatrix.getColumnDimension(); i++) {
+                for(int j = 0; j < inverseTransformationMatrix.getRowDimension() -1; j++){
+                    double formatter = inverseTransformationMatrix.getEntry(j,i);
+                    String formatted = String.format("%.3f", formatter);
+                    stream.write(formatted + " ");
+                }
+                stream.write('\n');
+            }
+            stream.write("\n# Sum absolute translations from original to transformed \n");
+             double totalSum = 0;
+             double vertexSum = 0;
+             for (int i = 0; i < startMatrix.getColumnDimension(); i++) {
+                for(int j = 0; j < startMatrix.getRowDimension() -1; j++){
+                    vertexSum += Math.abs(startMatrix.getEntry(j,i) - finalMatrix.getEntry(j,i));
+                }
+                totalSum += vertexSum;
+             }
+            String formatted = String.format("%.10f", vertexSum);
+            stream.write(formatted + " ");
+            stream.write('\n');
+
+            stream.write("\n# Sum absolute translations from original to transformed to \"original\" \n");
+             RealMatrix testTransform = transformationMatrix.multiply(startMatrix);
+
+            //System.out.println("after transform 2"+testTransform.toString() );
+            testTransform = inverseTransformationMatrix.multiply(testTransform);
+            vertexSum = 0;
+            totalSum = 0;
+            //System.out.println("after inverse 2"+testTransform.toString() );
+            for (int i = 0; i < startMatrix.getColumnDimension(); i++) {
+                for(int j = 0; j < startMatrix.getRowDimension() -1; j++){
+                    vertexSum += Math.abs(startMatrix.getEntry(j,i) - testTransform.getEntry(j,i));
+                }
+                totalSum += vertexSum;
+            }
+             formatted = String.format("%.10f", vertexSum);
+            stream.write(formatted + " ");
+            stream.write('\n');
+            stream.close();
+
+        }catch(IOException e){
+
+        }
+
     }
 
 
