@@ -4,25 +4,29 @@ package com.company;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        Driver[] driverArray = new Driver[args.length];
-        System.out.println(args[0]);
-        for(int i = 0 ; i < args.length; i++) {
-            driverArray[i] = new Driver();
-           File file = new File(args[i]);
-            System.out.println(file);
 
-            try{
-                Scanner scanner = new Scanner(file);
+        ArrayList<Driver> driverArray = new ArrayList<>();
+        ArrayList<Model> modelArray = new ArrayList<>();
+        System.out.println(args[0]);
+        File file = new File(args[0]);
+
+
+        try {
+            Scanner scannerLine = new Scanner(file);
+            while (scannerLine.hasNextLine()) {
+                String line = scannerLine.nextLine();
+                Scanner scanner = new Scanner(line);
                 Driver driver = new Driver();
                 String type = scanner.next();
                 double wx = Double.parseDouble(scanner.next());
                 double wy = Double.parseDouble(scanner.next());
                 double wz = Double.parseDouble(scanner.next());
-                driver.setAxisAngle(wx,wy,wz);
+                driver.setAxisAngle(wx, wy, wz);
                 double angle = Double.parseDouble(scanner.next());
                 driver.setAngle(angle);
                 double scale = Double.parseDouble(scanner.next());
@@ -30,24 +34,38 @@ public class Main {
                 double tx = Double.parseDouble(scanner.next());
                 double ty = Double.parseDouble(scanner.next());
                 double tz = Double.parseDouble(scanner.next());
-                driver.translate(tx,ty,tz);
+                driver.translate(tx, ty, tz);
                 String modelName = scanner.next();
-                Path modelPath = Paths.get(args[i]);
+                Path modelPath = Paths.get(args[0]);
                 System.out.println(modelPath);
                 driver.setModel(modelName);
-                driverArray[i] = driver;
-                System.out.println(driver.toString());
 
+                System.out.println(driver.toString());
                 Model model = new Model(driver);
+                //assigns model number
+                int modelsBefore = 0;
+                for(int i = 0; i<driverArray.size(); i++) {
+                    if(driver.getModelName().equals(driverArray.get(i).getModelName())){
+                        modelsBefore++;
+                    }
+                }
+                driver.setModelNumber(modelsBefore);
+                modelArray.add(model);
+                driverArray.add(driver);
                 scanner.close();
 
 
-
-            }catch( IOException e){
-                System.exit(1);
             }
-
-
+            scannerLine.close();
+            System.out.println(driverArray.size());
+            System.out.println(modelArray.size());
+        } catch (IOException e) {
+            System.exit(1);
         }
+        File folder = new File (args[0].substring(0,args[0].length()-4));
+        for (int i = 0; i < modelArray.size(); i++) {
+            modelArray.get(i).outputFile(driverArray.get(i),folder);
+        }
+
     }
 }

@@ -8,6 +8,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,26 +20,31 @@ public class Model {
 
     private ArrayList<double []> verticeList = new ArrayList<>();
     private ArrayList<String []> faces = new ArrayList< String []>();
+    private String lineHeader0;
+    private String lineHeader1;
+    private String sLine;
+    private RealMatrix finalMatrix;
 
     public Model (Driver driver){
 
-        File obj = new File(driver.getModel());
+        File obj = new File(driver.getModelName());
         System.out.println(obj);
         readFile(obj);
         double[][] verticeListForLibrary = convertVerticeListForLibrary();
-        //System.out.println(Arrays.deepToString(verticeListForLibrary));
+        System.out.println(Arrays.deepToString(verticeListForLibrary));
         RealMatrix matrix = MatrixUtils.createRealMatrix(verticeListForLibrary);
        // System.out.println(matrix.toString());
         matrix = matrix.transpose();
-        System.out.println("start" + matrix.toString());
+       // System.out.println("start" + matrix.toString());
         matrix = performManipulations(driver,matrix);
-        outputFiles();
+        finalMatrix = matrix;
 
     }
     private void readFile(File obj) {
         try {
-
             Scanner scanner = new Scanner(obj);
+            lineHeader0 = scanner.nextLine();
+            lineHeader1 = scanner.nextLine();
             while(scanner.hasNext()){
                 String lineToken = scanner.next();
                 if(lineToken.equals("v")){
@@ -52,6 +59,11 @@ public class Model {
                     verticeList.add(vertex);
                     //System.out.println(x + " " + y + " " + z);
                     //System.out.println(Arrays.deepToString(verticeList.toArray()));
+                    continue;
+                }
+                if(lineToken.equals("s")){
+                    sLine = scanner.next();
+                    //System.out.println(sLine);
                     continue;
                 }
                 if(lineToken.equals("f")){
@@ -94,14 +106,14 @@ public class Model {
     }
     private RealMatrix scale (Driver d, RealMatrix matrix){
         double scale = d.getScale();
-        System.out.println("scale factor:" + scale);
+        //System.out.println("scale factor:" + scale);
         RealMatrix scaleID = MatrixUtils.createRealIdentityMatrix(4);
         scaleID = scaleID.scalarMultiply(scale);
         double [] bottumRow = new double[] {0.0,0.0,0.0,1.0};
         scaleID.setRow(3,bottumRow);
-        System.out.println( " scale matrix : " + scaleID.toString());
+       // System.out.println( " scale matrix : " + scaleID.toString());
         matrix = scaleID.multiply(matrix);
-        System.out.println( " After Scale : " + matrix.toString());
+        //System.out.println( " After Scale : " + matrix.toString());
         return matrix;
     }
     private RealMatrix translate (Driver d, RealMatrix matrix){
@@ -109,11 +121,11 @@ public class Model {
         RealMatrix iD = MatrixUtils.createRealIdentityMatrix(4);
 
         iD.setColumn(iD.getColumnDimension() -1, translate);
-        System.out.println("id creation" + iD.toString());
+        //System.out.println("id creation" + iD.toString());
         double [] test = iD.getColumn(iD.getColumnDimension()-1);
-        System.out.println(matrix.toString());
+       // System.out.println(matrix.toString());
         matrix = iD.multiply(matrix);
-        System.out.println(matrix.toString());
+       // System.out.println(matrix.toString());
 
 
         return matrix;
@@ -122,14 +134,14 @@ public class Model {
         double[] axis = d.getAxis();
         Vector3D wVector = new Vector3D(axis);
         wVector = wVector.normalize();
-        System.out.println("normal axis: " + wVector.toString());
+       // System.out.println("normal axis: " + wVector.toString());
         Vector3D mVector = createMVector(wVector);
-        System.out.println("mvector: " + mVector.toString());
+        //System.out.println("mvector: " + mVector.toString());
         Vector3D uVector = mVector.crossProduct(wVector);
         uVector = uVector.normalize();
-        System.out.println("uvector: " + uVector);
+        //System.out.println("uvector: " + uVector);
         Vector3D vVector = wVector.crossProduct(uVector);
-        System.out.println("vVector: " + vVector);
+       // System.out.println("vVector: " + vVector);
 
         double [][] rotation = new double[4][4];
         double [] homoRow = new double[]{0,0,0,1};
@@ -143,15 +155,15 @@ public class Model {
         rotation[3] = homoRow;
 
         RealMatrix rotationMatrix = MatrixUtils.createRealMatrix(rotation);
-        System.out.println("R: " + rotationMatrix.toString());
+        //System.out.println("R: " + rotationMatrix.toString());
 
         double theta = d.getAngle();
         double thetaRadians = Math.toRadians(theta);
         double sinTheta =  Math.sin(thetaRadians);
         double cosTheta = Math.cos(thetaRadians);
 
-        System.out.println("sin: " + sinTheta);
-        System.out.println("cos: " + cosTheta);
+        //System.out.println("sin: " + sinTheta);
+        //System.out.println("cos: " + cosTheta);
 
         double [][] rotateAboutZ = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
         rotateAboutZ[0][0] = cosTheta;
@@ -161,20 +173,18 @@ public class Model {
         rotateAboutZ[2][2] = 1;
         rotateAboutZ[3][3] = 1;
         RealMatrix rotateAroundZ = MatrixUtils.createRealMatrix(rotateAboutZ);
-        System.out.println(rotateAroundZ.toString());
+        //System.out.println(rotateAroundZ.toString());
 
         RealMatrix fullTransform = rotationMatrix.transpose().multiply(rotateAroundZ);
         fullTransform= fullTransform.multiply(rotationMatrix);
-        System.out.println(fullTransform);
+        //System.out.println(fullTransform);
 
         matrix = fullTransform.multiply(matrix);
-        System.out.println("after rotation: " + matrix.toString());
+        //System.out.println("after rotation: " + matrix.toString());
 
         return matrix;
     }
-    private void outputFiles() {
 
-    }
     private Vector3D createMVector(Vector3D normalAxis) {
         double min = normalAxis.getX();
         int place = 0;
@@ -186,6 +196,52 @@ public class Model {
 
         return mAxis;
     }
+    public RealMatrix getFinalMatrix(){
+        return finalMatrix;
+    }
+    public String getsLine(){
+        return sLine;
+    }
+    public ArrayList<String []> getFaces(){
+        return faces;
+    }
+
+    public File outputFile(Driver d, File folder){
+
+        File outfile = new File(folder,d.getModelName().substring(0,d.getModelName().length()-4) + "_mw0"+d.getModelNumber() + ".obj");
+        if(!outfile.getParentFile().exists()) {
+            outfile.getParentFile().mkdirs();
+        }
+        System.out.println(outfile.getAbsolutePath());
+        try {
+            FileWriter stream = new FileWriter(outfile);
+            stream.write(lineHeader0 + '\n');
+            stream.write(lineHeader1 + '\n');
+            for (int i = 0; i < finalMatrix.getColumnDimension(); i++) {
+                stream.write('v' + " ");
+                for(int j = 0; j < finalMatrix.getRowDimension() -1; j++){
+                    double formatter = finalMatrix.getEntry(j,i);
+                    String formatted = String.format("%.6f", formatter);
+                    stream.write(formatted + " ");
+                }
+                stream.write('\n');
+            }
+            stream.write("s "+ sLine+ "\n");
+            for(int i = 0 ;  i<faces.size(); i++ ){
+                stream.write("f ");
+                for(int j = 0; j < faces.get(i).length;j++){
+                    stream.write(faces.get(i)[j] + " ");
+                }
+                stream.write('\n');
+            }
+            stream.close();
+
+        }catch (IOException f){
+            System.exit(3);
+        }
+        return outfile;
+    }
+
 
 
 }

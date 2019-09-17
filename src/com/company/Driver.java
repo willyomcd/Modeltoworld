@@ -11,6 +11,7 @@ public class Driver {
     private double scale;
     private double tx, ty, tz;
     private String model;
+    private int modelNumber;
 
     public Driver (){
         wx = 0;
@@ -21,6 +22,7 @@ public class Driver {
         tx = 0;
         ty = 0;
         tz = 0;
+        modelNumber = 0;
 
     }
     public void setAxisAngle (double wx, double wy, double wz) {
@@ -42,11 +44,18 @@ public class Driver {
     public void setModel(String model) {
         this.model = model;
     }
-    public String getModel() {
+
+    public void setModelNumber(int i){
+        this.modelNumber = i;
+    }
+    public String getModelName() {
         return this.model;
     }
     public double getScale(){
         return scale;
+    }
+    public int getModelNumber(){
+        return modelNumber;
     }
     public double[] getTranslation(){
         //the added one is for homogenous translation
@@ -60,6 +69,8 @@ public class Driver {
         double[] axis = new double[]{wx,wy,wz};
         return axis;
     }
+
+
 
     @Override
     public String toString() {
